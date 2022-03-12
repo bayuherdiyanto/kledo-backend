@@ -3,18 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\SettingPatchRequest;
 use App\Models\Settings;
 
 class SettingController extends Controller
 {
-    public function update(Request $request)
+    public function update(SettingPatchRequest $request)
     {
-        $validated = $request->validate([
-            'key' => 'required|in:overtime_method',
-            'value' => 'required|exists:references,id',
-        ]);
-
         $model = Settings::find('overtime_method');
         $model->key   = $request->key;
         $model->value = $request->value;
