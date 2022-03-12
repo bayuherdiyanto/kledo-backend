@@ -3,48 +3,90 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Http\Request;
+use App\Http\Requests\EmployeeCreateRequest;
+use App\Http\Requests\EmployeeShowRequest;
+use App\Http\Resources\EmployeeShowResource;
 use App\Models\Employees;
 
 class EmployeeController extends Controller
 {
-    public function messages()
+    /**
+     * @OA\Post(
+     *     path="/api/employee/",
+     *     summary="Insert employee",
+     *      @OA\RequestBody(
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     property="name",
+     *                     type="string"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="status_id",
+     *                     type="string"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="salary",
+     *                     type="string"
+     *                 ),
+     *                 example={"name": "Bayu Herdiyanto", "status_id": "3", "salary": "2000000"}
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK",
+     *          @OA\JsonContent(
+     *             @OA\Examples(example="result", value={"success": true}, summary="An result object."),
+     *             @OA\Examples(example="bool", value=false, summary="A boolean value."),
+     *         )
+     *     )
+     * )
+     */
+    public function create(EmployeeCreateRequest $request)
     {
-        return [
-            'name.required' => 'A title is required',
-            'status_id.required' => 'A message is required',
-        ];
-    }
-
-    public function create(Request $request)
-    {
-        $customMessages = [
-            'required' => 'The :attribute field is required.'
-        ];
-        $request->validate([
-            'name' => 'required|string|min:2|unique:Employees,name',
-            'status_id' => 'required|integer|min:2000000|max:10000000|exists:references,id',
-            'salary' => 'required',
-        ], $customMessages);
-
         $model = new Employees;
         $model->name      = $request->name;
         $model->status_id = $request->status_id;
         $model->salary    = $request->salary;
         $model->save();
-
         return response()->json(['message' => 'Create employee success'], 202);
     }
-
-    public function show(Request $request)
+    /**
+     * @OA\Get(
+     *     path="/api/employee?per_page={per_page}&order_by={order_by}&order_type={order_type}",
+     *      @OA\Parameter(
+     *         in="path",
+     *         name="per_page",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="order_by",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="order_type",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     summary="Get employee pagination",
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK",
+     *          @OA\JsonContent(
+     *             @OA\Examples(example="result", value={"success": true}, summary="An result object."),
+     *             @OA\Examples(example="bool", value=false, summary="A boolean value."),
+     *         )
+     *     )
+     * )
+     */
+    public function show(EmployeeShowRequest $request)
     {
-        $request->validate([
-            'per_page' => 'integer',
-            'page' => 'integer',
-            'order_by' => 'in:name,salary',
-            'order_type' => 'in:ASC,DESC',
-        ]);
         $per_page = ($request->per_page) ? $request->per_page : 10;
         $order_by = ($request->order_by) ? $request->order_by : 'name';
         $order_type = ($request->order_type) ? $request->order_type : 'asc';
@@ -61,5 +103,7 @@ class EmployeeController extends Controller
             // ->get();
             ->simplePaginate($per_page);
         return response()->json($model, 202);
+
+        return response()->json(EmployeeShowResource::collection($model), 202);
     }
 }
